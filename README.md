@@ -16,7 +16,8 @@ Create a text file named `students.txt`. Copy and paste all text from the Banner
 
 ## Contribution
 This source code is a mess. It was cobbled together with no intention to extend it further. The `.exe` is created with the `auto-py-to-exe` pip package.
+
 Todos:
 - Reduce file size
-- Clean up code (especially create a more encompassing DataFrame)
+- Clean up code (especially create a more encompassing `DataFrame`)
 - Add settings for what the output should look like
