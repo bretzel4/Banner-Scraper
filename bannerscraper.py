@@ -10,7 +10,6 @@ from pandas import ExcelWriter
 from bs4 import BeautifulSoup
 import logging
 import sys
-import os
 import socket
 
 df1 = False
@@ -131,8 +130,6 @@ def Scrape(banner_parser):
     base_url = 'https://www.uvm.edu/directory/api/query_results.php?name='
     urls = list(map(lambda x: base_url + x.replace(" ", "%20"), banner_parser.students_stripped))
     name_from_url = dict(zip(urls, banner_parser.students_list))
-
-    os.remove('.\\log.txt')
 
     process = CrawlerProcess()
     process.crawl(StudentSpider, start_urls=urls, name_from_url=name_from_url)
