@@ -32,17 +32,38 @@ class BannerParser:
         try:
             self.students_list = re.findall('\d{9}\n(.+?(?=,).+)', self.raw)
             self.students_stripped = list(map(self.FormatName, self.students_list))
-            info_line = re.search('Term.+\n', self.raw).group(0).split(' ')
+
+            # firefox and chrome copy text off the webpage in slightly different formats.
+            # once we get the appropriate section (starting in Term and ending with Roll\sDegree),
+            # we need to split by " ", "\n", and by the change from numbers to letters
+            # in order to account for all different options
+            # ex of firefox: Term 202109 Fall 2021CRN 12345 SUBJECT 000 A Roll Degree Award Status Select....
+            # ex of chrome:
+            #     Term 202109
+            #     Fall 2021
+            #     CRN 12345
+            #     SUBJECT
+            #     000
+            #     A
+            #     Roll
+            #     Degree Award Status Select....
+
+            # split by default splits by all whitespace
+            # ex output: ['202109', 'Fall', '2021', 'CRN', '12345', 'SUBJECT', '000', 'A']
+            info_section = re.search(r'\nTerm ([\s\S]+)Roll\sDegree', self.raw).group(1)
+            info_section = re.findall(r'\d+|\D+', info_section)
+            info_section = list(map(lambda x: x.strip(), info_section))
+
         except AttributeError:
             input("ERROR: No student names found.\nPress Enter to continue.")
             sys.exit()
 
-        self.subject = info_line[5]
-        self.number = info_line[6]
-        self.term = info_line[1]
-        self.crn = info_line[4]
-        self.section = info_line[7]
-        # print([self.subject, self.number, self.term, self.crn, self.section])
+        self.subject = info_section[5]
+        self.number =  info_section[6]
+        self.term =    info_section[0]
+        self.crn =     info_section[4]
+        self.section = info_section[7]
+        print([self.subject, self.number, self.term, self.crn, self.section])
 
     def FormatName(self, name):
         name = name.split(',')
@@ -103,16 +124,12 @@ class ProfSpider(scrapy.Spider):
     custom_settings = {'LOG_FILE': 'log.txt'}
 
     def parse(self, response):
-        # print(self.start_urls)
-        # print(self.crn)
-        # print(response)
         soup = BeautifulSoup(str(response.body))
         table = soup.find('table', id='sections')
         for row in table.find_all('tr'):
             if self.crn in str(row):
                 global prof
                 prof = row.select_one('td[data-label="Instructor"]').get_text().rstrip('\\t').split()[-1]
-                # print(prof)
 
 def check_connection():
     try:
@@ -137,7 +154,7 @@ def Scrape(banner_parser):
     prof_url = 'https://www.uvm.edu/coursedirectory/search.php?subject=' + banner_parser.subject + \
                     '&number=' + banner_parser.number + \
                     '&term=' + banner_parser.term + '&section'
-    # print(prof_url)
+
     process.crawl(ProfSpider, start_urls=[prof_url], crn=banner_parser.crn)
     process.start()
 
@@ -151,7 +168,6 @@ def main():
 
     print(df1)
     print(df2)
-    # print(prof)
 
     # save the current contents in the file
     pathname = '.\\' + banner_parser.subject + ' ' + banner_parser.number + ' ' + \
