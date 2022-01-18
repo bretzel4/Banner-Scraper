@@ -50,7 +50,7 @@ class BannerParser:
 
             # split by default splits by all whitespace
             # ex output: ['202109', 'Fall', '2021', 'CRN', '12345', 'SUBJECT', '000', 'A']
-            info_section = re.search(r'\nTerm ([\s\S]+)Roll\sDegree', self.raw).group(1)
+            info_section = re.search(r'\nTerm ([\s\S]+?)Roll\sDegree', self.raw).group(1)
             info_section = re.findall(r'\d+|\D+', info_section)
             info_section = list(map(lambda x: x.strip(), info_section))
 
