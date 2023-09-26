@@ -11,6 +11,10 @@ from bs4 import BeautifulSoup
 import logging
 import sys
 import socket
+import platform # check os type for file paths
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.common.by import By
 
 df1 = False
 df2 = False
@@ -117,19 +121,29 @@ class StudentSpider(scrapy.Spider):
         df2 = DataFrame({'Name': self.error_names, 'Error': self.error_errors})
         df2.sort_values(by=['Name'], inplace=True)
 
-class ProfSpider(scrapy.Spider):
-    name = 'prof'
-    crn = ''
-    start_urls = []
-    custom_settings = {'LOG_FILE': 'log.txt'}
+def getProf(crn):
+    options = Options()
+    if platform.system() == "Windows":
+        options.add_argument("--headless")
+    else:
+        options.headless = True
+    profDriver = webdriver.Firefox(options=options)
+    profDriver.implicitly_wait(0.5)
+    profDriver.get("https://soc.uvm.edu/")
+    kwBox = profDriver.find_element(By.ID, "crit-keyword")
+    sButton = profDriver.find_element(By.ID, "search-button")
+    kwBox.click()
+    kwBox.clear()
+    kwBox.send_keys(crn)
+    sButton.click()
+    resButt = profDriver.find_element(By.CLASS_NAME, "result__link")
+    resButt.click()
+    profEl = profDriver.find_element(By.CLASS_NAME, "instructor-detail")
+    global prof
+    prof = profEl.text
+    print(prof)
+    profDriver.quit()
 
-    def parse(self, response):
-        soup = BeautifulSoup(str(response.body))
-        table = soup.find('table', id='sections')
-        for row in table.find_all('tr'):
-            if self.crn in str(row):
-                global prof
-                prof = row.select_one('td[data-label="Instructor"]').get_text().rstrip('\\t').split()[-1]
 
 def check_connection():
     try:
@@ -155,12 +169,11 @@ def Scrape(banner_parser):
                     '&number=' + banner_parser.number + \
                     '&term=' + banner_parser.term + '&section'
 
-    process.crawl(ProfSpider, start_urls=[prof_url], crn=banner_parser.crn)
+    getProf(str(banner_parser.crn))
     process.start()
 
 def main():
     logging.getLogger('scrapy').setLevel(logging.WARNING)
-
     with open('students.txt') as f:
         banner_parser = BannerParser(f.read())
 
@@ -170,8 +183,19 @@ def main():
     print(df2)
 
     # save the current contents in the file
-    pathname = '.\\' + banner_parser.subject + ' ' + banner_parser.number + ' ' + \
-                       banner_parser.section + ' (' + prof + ').xlsx'
+    # added mac support
+    basefname =  banner_parser.subject + ' ' + banner_parser.number + ' ' + \
+            banner_parser.section
+    if platform.system() == "Windows":
+        prefixfname = ".\\"
+    else:
+        prefixfname = "./"
+
+    endfname = ".xlsx"  
+
+    if prof:
+        endfname = f" ({prof}){endfname}"
+    pathname = prefixfname + basefname + endfname
     print(pathname)
     try:
         with ExcelWriter(pathname) as writer:
