@@ -1,11 +1,19 @@
 # Banner-Scraper
- 
+
+Fork of Banner-Scraper updated to grab instructor names from the new UVM course search tool at https://soc.uvm.edu
+
 Created by Lilac Damon http://www.meltedlilacs.com
 
 This program uses pasted info from Banner in order to compile a list of student emails and other details.
 
 ## Usage
 Create a text file named `students.txt`. Copy and paste all text from the Banner page into the text file. If there are multiple pages worth of students, paste each page sequentially. Next, run `bannerscraper.exe` by double-clicking it. If everything works correctly, an Excel spreadsheet should be generated. That spreadsheet has two tabs, the results and the errors. Before using the results, look through the errors and try to resolve any you can. A file `log.txt` is also generated, but that can be ignored.
+
+### Mac instructions
+When using the mac version:
+Run `chmod +x /path/to/executable` before running the file.
+
+Run the executable from within the directory containing `students.txt`.
 
 ## Privacy
 1) This program never directly connects to Banner. It therefore has no way to access or manipulate privileged information.
